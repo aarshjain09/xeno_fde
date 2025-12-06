@@ -1,73 +1,75 @@
 # 🚀 Shopify Multi-Tenant Data Sync & Analytics Dashboard
 
-A multi-tenant platform for syncing **Shopify Products, Orders, and Customers** and visualizing analytics through a React dashboard.
+A multi-tenant platform for syncing **Shopify Products, Orders, Customers, and Events** and visualizing analytics through a React dashboard.
 
 This project demonstrates real-world engineering concepts such as multi-tenancy, scheduled data sync, Shopify API integration, clean ORM design, and production-grade deployment.
 
 ---
+
 LINK - https://xeno-fde-p824-48o3i17s2-aarshjain09s-projects.vercel.app/
+
+---
 
 ## 📌 Tech Stack
 
 ### **Backend**
-- Node.js + Express.js  
-- Sequelize ORM  
-- MySQL (Multi-tenant schema)  
+- Node.js + Express.js
+- Sequelize ORM
+- MySQL (Multi-tenant schema)
 - node-cron (automated sync jobs)
 
 ### **Frontend**
-- React (Vercel deployment)  
-- Recharts (analytics visualization)  
+- React (Vercel deployment)
+- Recharts (analytics visualization)
 - Axios (API communication)
 
 ### **Integration**
-- Shopify Admin REST API  
+- Shopify Admin REST API
 
 ### **Deployment**
-- Backend → Render  
-- Frontend → Vercel  
+- Backend → Render
+- Frontend → Vercel
 
 ---
 
 ## 🌐 Features
 
-### 🔐 **Multi-Tenant Architecture**
-- Each tenant stores Shopify credentials (store URL + access token)
-- All synced data contains a `tenantId` for isolation  
-- Clean relational schema using Sequelize models  
+### 🔐 Multi-Tenant Architecture
+- Each tenant stores Shopify store credentials
+- All synced data contains a `tenantId` for isolation
+- Clean relational schema using Sequelize models
 
 ---
 
-### 🔄 **Automated Shopify Data Sync**
+### 🔄 Automated Shopify Data Sync
 Supports syncing:
-
-- Products  
-- Orders  
-- Customers  
+- Products
+- Customers
+- Orders
+- Order Items
+- Events (cart abandonment, checkout started)
 
 Sync methods:
-
-- **Manual Sync** → `/api/sync/run/:tenantId`  
-- **Automatic Sync** → via `node-cron`  
-
----
-
-### 📊 **Analytics Dashboard**
-
-Frontend dashboard includes:
-
-- Total Revenue  
-- Total Orders  
-- Orders per Day Chart  
-- Top Selling Products  
-- Customer Growth Metrics  
+- **Manual Sync** → `/sync/shopify`
+- **Automatic Sync** → via node-cron
 
 ---
 
-## 🏗 High-Level Architecture Diagram (PlantUML)
+### 📊 Analytics Dashboard
+- Revenue metrics
+- Total orders
+- Customers
+- Date-wise analytics
+- Top customers
+- Product performance
 
-<img width="998" height="964" alt="xeno_architecture" src="https://github.com/user-attachments/assets/c3acd6c7-a0cf-470d-9b4b-45ae1d63ff55" />
+---
 
+## 🏗 High-Level Architecture Diagram
+<img width="998" height="964" alt="xeno_architecture" src="https://github.com/user-attachments/assets/c8fbdaa7-a8dd-40c7-b113-6ea115232193" />
+
+
+---
 
 ## 📂 Project Structure
 
@@ -76,9 +78,7 @@ Frontend dashboard includes:
   /src
     /config/db.js
     /models/*.js
-    /routes/tenants.js
-    /routes/sync.js
-    /routes/analytics.js
+    /routes/*.js
     /services/shopifySync.js
     index.js
     cron.js
@@ -93,93 +93,141 @@ Frontend dashboard includes:
 
 ---
 
-## 🗄 Database Schema
+# 🗄 Database Schema (Accurate to Code)
 
-### **tenants**
+## **Tenants**
 | field | type |
 |-------|------|
-| id | UUID |
-| storeUrl | string |
-| accessToken | string |
+| id | INTEGER |
+| name | STRING |
+| email | STRING (unique) |
+| password | STRING |
 
 ---
 
-### **products**
+## **Shopify Stores**
 | field | type |
 |-------|------|
-| id | int |
-| tenantId | FK |
-| shopifyProductId | varchar |
-| title | varchar |
-| price | decimal |
-| inventory | int |
+| id | INTEGER |
+| tenantId | INTEGER |
+| storeDomain | STRING |
+| accessToken | STRING |
 
 ---
 
-### **orders**
+## **Customers**
 | field | type |
 |-------|------|
-| id | int |
-| tenantId | FK |
-| shopifyOrderId | varchar |
-| totalPrice | decimal |
-| currency | varchar |
-| createdAt | datetime |
+| id | INTEGER |
+| tenantId | INTEGER |
+| shopifyCustomerId | BIGINT |
+| firstName | STRING |
+| lastName | STRING |
+| email | STRING |
+| createdAtShopify | DATE |
 
 ---
 
-### **customers**
+## **Products**
 | field | type |
 |-------|------|
-| id | int |
-| tenantId | FK |
-| shopifyCustomerId | varchar |
-| name | varchar |
-| email | varchar |
+| id | INTEGER |
+| tenantId | INTEGER |
+| shopifyProductId | BIGINT |
+| title | STRING |
+| price | FLOAT |
 
 ---
 
-## 🔗 API Endpoints
+## **Orders**
+| field | type |
+|-------|------|
+| id | INTEGER |
+| tenantId | INTEGER |
+| shopifyOrderId | BIGINT |
+| customerId | INTEGER |
+| totalPrice | FLOAT |
+| currency | STRING |
+| createdAtShopify | DATE |
 
-### **Tenant APIs**
+---
+
+## **Order Items**
+| field | type |
+|-------|------|
+| id | INTEGER |
+| tenantId | INTEGER |
+| orderId | INTEGER |
+| productId | INTEGER |
+| quantity | INTEGER |
+| price | FLOAT |
+
+---
+
+## **Events**
+| field | type |
+|-------|------|
+| id | INTEGER |
+| tenantId | INTEGER |
+| type | STRING |
+| customerId | INTEGER |
+| occurredAt | DATE |
+| metadata | JSON |
+
+---
+
+# 🔗 API Endpoints
+
+## **Auth APIs**
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/tenants/register` | Register a tenant |
-| GET  | `/api/tenants` | List tenants (debug) |
+| POST | `/auth/register` | Register tenant |
+| POST | `/auth/login` | Login tenant |
 
 ---
 
-### **Sync APIs**
+## **Tenant APIs**
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/sync/run/:tenantId` | Manually trigger sync |
-| GET  | `/api/sync/status/:tenantId` | Get last sync timestamp |
+| POST | `/tenants/store` | Add / Update Shopify Store |
+| GET | `/tenants/store` | Get all stores for tenant |
 
 ---
 
-### **Analytics APIs**
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/analytics/orders/:tenantId` |
-| GET | `/api/analytics/revenue/:tenantId` |
-| GET | `/api/analytics/products/:tenantId` |
-| GET | `/api/analytics/customers/:tenantId` |
+## **Sync APIs**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/sync/shopify` | Trigger manual sync |
+
+---
+
+## **Metrics APIs**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/metrics/summary` | Total revenue, orders, customers |
+| GET | `/metrics/orders-by-date` | Date-wise order analytics |
+| GET | `/metrics/top-customers` | Top 5 customers |
+
+---
+
+## **Debug APIs**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/debug/shopify/customers` | Test Shopify customer fetch |
 
 ---
 
 ## 🚀 Local Development
 
-### **Backend Setup**
-```bash
+### Backend
+```
 cd backend
 npm install
 npm run dev
 ```
 
----
-
-### **Frontend Setup**
-```bash
+### Frontend
+```
 cd frontend
 npm install
 npm start
@@ -189,28 +237,19 @@ npm start
 
 ## 🌐 Deployment
 
-### **Backend (Render)**
-- Add environment variables:
-  - `DB_HOST`
-  - `DB_USER`
-  - `DB_PASSWORD`
-  - `DB_NAME`
-  - `PORT`
-- Build: `npm install`
-- Start: `npm start`
+### Render (Backend)
+- Add DB credentials
+- Start command: `npm start`
+
+### Vercel (Frontend)
+- Set REACT_APP_API_BASE_URL
 
 ---
 
-### **Frontend (Vercel)**
-- Deploy via GitHub integration  
-
----
-
-## ⚠️ Known Limitations
-
-- Shopify OAuth app installation not implemented  
-- No real-time webhooks (using cron instead)  
-- Basic token auth (not full session management)  
+## ⚠ Known Limitations
+- OAuth not implemented
+- No Shopify webhook ingestion
+- Basic JWT auth (no roles)
 
 ---
 
