@@ -74,7 +74,7 @@ Sync methods:
 ## 📂 Project Structure
 
 ```
-/backend
+/server
   /src
     /config/db.js
     /models/*.js
@@ -85,7 +85,6 @@ Sync methods:
 
 /frontend
   /src
-    /components
     /pages
     /services/api.js
     /styles
